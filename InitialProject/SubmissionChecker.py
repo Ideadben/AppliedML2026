@@ -24,6 +24,7 @@ def main() -> None:
         "submission_dir",
         help="Path to one student submission folder (contains CSV/TXT files).",
     )
+
     parser.add_argument(
         "--max-errors",
         type=int,
