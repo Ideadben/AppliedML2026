@@ -20,3 +20,4 @@ bayesian-optimization
 optuna
 shap
 scikeras
+umap-learn

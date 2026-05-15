@@ -1,0 +1,98 @@
+Classification
+    1. Classification_BenjaminSiddique_XGBoost.csv
+    Algorithm: xgboost XGBClassifier
+    Key HPs: 'colsample_bytree': 0.5652557234189701, 'gamma': 3.51736565314329, 'learning_rate': 0.054085611612491404, 'max_depth': 11, 'min_child_weight': 13, 'n_estimators': 3195, 'subsample': 0.601524371658356
+    HP optimization: skopt import BayesSearchCV with 100 iterations
+    Parameters in model: 21955
+    Pre-processing: Top 15 features chosen based on highest scores on sklearn.inspection permutation_importance on the model.
+    Loss function and value on validation set: 0.07646990831652209 (Log-loss)
+    Own Evaluation: Significantly increasing the HP optimization search space did not yield better results, so for my chosen features this seemed to be the best model.
+                    Validation accuracy could possibly become better with other features but when i tried using Conditional Feature importance to account for correlations between featues,
+                    the validation accuracy actually decreased.
+
+    2. Classification_BenjaminSiddique_LightGBM.csv
+    Algorithm: lightgbm LGBMClassifier
+    Key HPs: 'colsample_bytree': 0.6386905914905663, 'learning_rate': 0.0664363479171284, 'max_depth': 10, 'min_child_weight': 2, 'n_estimators': 639, 'subsample': 0.5388673184824924
+    HP optimization: sklearn.model_selection RandomizedSearchCV with 100 iterations
+    Parameters in model: 19809
+    Pre-processing: Top 15 features chosen based on highest scores on sklearn.inspection permutation_importance on the model.
+    Loss function and value on validation set: 0.0757463129687882 (Log-loss)
+    Own Evaluation: I expected it to perform about the same as XGBoost which it did in my opinion. But very easy to transition from one BDT to another.
+
+    3. Classification_BenjaminSiddique_PytorchNN.csv
+    Algorithm: torch.nn
+    Key HPs: 'batch_size': 16, 'dropout': 0.1624074561769746, 'epochs': 53, 'hidden_size': 256, 'learning_rate': 0.0003058449429580245
+    HP optimization: RandomizedSearchCV with 50 iterations
+    Parameters in model: 37121
+    Pre-processing: Top 15 features chosen based on highest scores on sklearn.inspection permutation_importance on the model.
+    Loss function and value on validation set: 0.09647955108870754 (Log-loss)
+    Own Evaluation: Pretty poor performance on the validation set. Especially dissappointing because it took a longer time to train.
+
+Regression
+    1. Regression_BenjaminSiddique_XGBoost.csv
+    Algorithm: xgboost XGBRegressor
+    Key HPs: 'colsample_bytree': 0.6079105137484215, 'gamma': 3.114452379095001, 'learning_rate': 0.0356042394981304, 'max_depth': 6, 'min_child_weight': 3, 'n_estimators': 755, 'subsample': 0.9879260397312672
+    HP optimization: skopt import BayesSearchCV with 100 iterations
+    Parameters in model: 39066
+    Pre-processing: Top 20 features chosen based on highest scores on sklearn.inspection permutation_importance on the model.
+    Loss function and value on validation set: 0.1821 (MAE of Relative Deviation)
+    Own Evaluation: 18% deviation from True value seems a bit large? But this is my best performing model. However i tried changing the hyperparameter space several times and didt get anythin that was notably better.
+
+    2. Regression_BenjaminSiddique_LightGBM.csv
+    Algorithm: lightgbm LGBMRegressor
+    Key HPs: 'colsample_bytree': 0.647816842918857, 'learning_rate': 0.041648277949081186, 'max_depth': 6, 'min_child_weight': 7, 'n_estimators': 447, 'subsample': 0.6781489190384875
+    HP optimization: skopt import RandomizedSearchCV with 100 iterations
+    Parameters in model: 13212
+    Pre-processing: Top 15 features chosen based on highest scores on sklearn.inspection permutation_importance on the model. I accidently used 15 instead of 20 and it just yielded a lower MAE so i decided to use that result :).
+    Loss function and value on validation set: 0.2345 (MAE of Relative Deviation)
+    Own Evaluation: Surprised that its MAE score is so much higher than XGBoosts. But i guess it only has 1/3 of its parameters, even though i optimized them on about the same hyperparameterspace.
+
+    3. Regression_BenjaminSiddique_PytorchNN.csv
+    Algorithm: torch.nn
+    Key HPs: 'batch_size': 32, 'dropout': 0.11016765069763808, 'epochs': 80, 'hidden_size': 256, 'learning_rate': 0.009057635956735194
+    HP optimization: RandomizedSearchCV with 50 iterations
+    Parameters in model: 37121
+    Pre-processing: Top 20 features chosen based on highest scores on sklearn.inspection permutation_importance on the model. Scaled the input features using StandardScaler.
+    Loss function and value on validation set: 0.346493 (MAE of Relative Deviation)
+    Own Evaluation: Again pretty poor performance on the validation set, which is frustrating based on how long it took to train. (And yes i did try increasing learning rate but it was very sensitive and would sometimes increase training loss the more it trained)
+
+
+
+Clustering
+    The one large outlier in columns Energy and Lz were normalized to 0 for all runs, because i reasoned it must have been a faulty measurement, since it was many standard deviations away. 
+    Feature selection was done by fixing J and E as selected features (J being selected cause it was 1:1 with H and K and E being chosen for its multimodal distribution)
+    and then running an exhaustive grid search along all possible feature combination values(Excluding of course K and H). In the grid search each feature combination was 
+    run through a quick clustering algorithm for all possible cluster sizes from 4 to 40 (67,340 total models) with sklearn's Kmeans algorithm and n_init = 20 and optimal 
+    feature combinations were determined using silhouette scores. These selected features were all used for the below models:
+    ['J', 'E', 'O_FE', 'CA_FE', 'CR_FE', 'CO_FE']
+
+    1. Clustering_BenjaminSiddique_Kmeans.csv
+    Algorithm: sklearn.cluster KMeans
+    Key HPs: k = 4, n_init = 50
+    HP optimization: Chosen based on iterating over every cluster size and maximizing silhouette scores
+    Parameters in model: 24
+    Pre-processing: Scaled the input features using StandardScaler
+    Loss function and value on validation set: N/A
+    Own Evaluation: Looked fine in PCA decomposition but there seemed to be an isolated block that was absorbed into the really large cluster in the UMAP
+    and tSNE projections which was a bit unsatisfying.
+
+
+    2. Clustering_BenjaminSiddique_GMM1.csv
+    Algorithm: scikit-learn GaussianMixture
+    Key HPs: k = 6, n_init = 50
+    HP optimization: Chosen based on iterating over every cluster size and maximizing silhouette scores
+    Parameters in model: 167
+    Pre-processing: Scaled the input features using StandardScaler
+    Loss function and value on validation set: N/A
+    Own Evaluation: Silhouette score only 1/4 compared to Kmeans, but significantly better looking projection plots and identifies smaller clusters better than previously.
+
+
+    3. Clustering_BenjaminSiddique_GMM2.csv
+    Algorithm: scikit-learn GaussianMixture
+    Key HPs: k = 5, n_init = 50
+    HP optimization: Iterating over all possible feature combinations(with J and E guaranteed and H and K excluded) and cluster sizes for a maximization of silhouettescore,
+                     but this time using the GMM algorithm with n_init = 3 instead of choosing features based on kmeans as was done in GMM1.
+    Parameters in model: 139
+    Pre-processing: Scaled the input features using StandardScaler
+    Loss function and value on validation set: N/A
+    Own Evaluation: Silhouette score only 1/5 compared to Kmeans, but the seperations looks really good in 2- and 3d when i plotted it with PCA, tSNE and UMAP.
